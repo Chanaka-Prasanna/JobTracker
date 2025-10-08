@@ -1,74 +1,75 @@
 # Job Application Tracker
 
-A simple desktop application to track job applications, especially useful for LinkedIn job posts where application tracking isn't available.
+A desktop application to track job applications, especially useful for LinkedIn job posts where application tracking isn't available.
+
+![Job Tracker Screenshot](screenshots/main.png)
+
+## Download
+
+👉 [Download Latest Release](../../releases/latest)
+
+Just download, unzip, and run! No installation needed.
 
 ## Features
 
-- Search for previous job applications by job link or company name
-- Add new job applications with company name and job link
-- View detailed information for each application
-- Copy job links with one click
-- Delete individual or all records
-- Modern UI with bootstrap styling
-- Data stored locally in JSON format
-- Record numbering and total count display
+- Track job applications with company name and job link
+- Search through previous applications
+- View basic application statistics
+- Modern user interface with dark mode support
+- No installation needed - portable application
+- Data stored locally for privacy
 
-## For Users: Installing the Application
+## For Users
 
-### Option 1: Using the Installer
+1. Go to [Releases](../../releases)
+2. Download the latest `JobTracker-vX.X.X-windows.zip`
+3. Extract the zip file
+4. Run `JobTracker.exe`
+5. Start tracking your applications!
 
-1. Download the latest release from the releases page
-2. Run the JobTracker.exe file
-3. The application will create its data file in the same directory
+## Important: Local data storage
 
-### Option 2: Running from Source
+- Your data is stored only on your computer; nothing is uploaded to any cloud service.
+- Default location: the same folder as `JobTracker.exe` (portable app behavior).
+- You can change where data is stored from within the app: Settings → Storage Location → Change Folder.
+- Tip: If you keep the exe on your Desktop, consider creating a personal subfolder (e.g., `Desktop\\MyJobTracker`) and choose it. Otherwise, `settings.json` and `job_data.json` will be created directly on the Desktop.
 
-1. Make sure you have Python 3.7+ installed
-2. Install the required packages:
-   ```
-   pip install -r requirements.txt
-   ```
-3. Run the application:
-   ```
-   python job_tracker.py
-   ```
+## For Developers
 
-## For Developers: Building the Application
+### Requirements
 
-1. Install development requirements:
+- Python 3.7+
+- Required packages in requirements.txt
 
-   ```
-   pip install -r requirements.txt
-   ```
+### Setup Development Environment
 
-2. Build the executable:
+```bash
+# Clone the repository
+git clone https://github.com/YourUsername/JobTracker.git
+cd JobTracker
 
-   ```
-   python build.py
-   ```
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-3. Find the executable in the `dist` directory
+# Install dependencies
+pip install -r requirements.txt
+```
 
-## Usage
+### Run in Development Mode
 
-1. Adding a Job Application:
+```bash
+python job_tracker.py
+```
 
-   - Enter the company name
-   - Enter the job link
-   - Click "Add Job"
+### Build Executable
 
-2. Searching Applications:
+```bash
+python build.py
+```
 
-   - Enter the job link or company name
-   - Select search type (by link or by company)
-   - Click "Search" or "Show All" to see all records
+The executable and distribution package will be created in the `JobTracker_Distribution` folder.
 
-3. Managing Records:
-   - Click on any record to view full details
-   - Use the "Copy Link" button in the details view
-   - Delete individual records or use "Delete All"
-   - See total record count at the top
+## License
 
-## Data Storage
-
-The application stores all data in a `job_data.json` file in the same directory as the application. This file is automatically created when you add your first job application.
+MIT License - feel free to use and modify!

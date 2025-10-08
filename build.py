@@ -24,7 +24,7 @@ def ensure_data_files():
     if not os.path.exists('settings.json'):
         # Only create if it doesn't exist
         from settings_manager import SettingsManager
-        settings_manager = SettingsManager()
+        settings_manager = SettingsManager(os.getcwd())
         settings_manager.load_settings()
     
     # Ensure job_data.json exists
@@ -103,9 +103,12 @@ This is a standalone application for tracking job applications.
 To use:
 1. Double-click JobTracker.exe to start
 2. No installation needed
-3. Data is stored in the same folder as the executable
+3. Data is stored locally by default next to the executable
 
-Note: Keep all files in the same folder."""
+Important:
+- Your data is stored only on your computer; nothing is uploaded to any cloud.
+- You can change where data is stored from within the app: Settings → Storage Location → Change Folder.
+- If you keep the exe on your Desktop, consider creating a personal subfolder (e.g., Desktop\\MyJobTracker) and choose it to avoid files being created directly on the Desktop."""
     
     with open(os.path.join(dist_folder, "README.txt"), 'w') as f:
         f.write(readme_content)
@@ -114,7 +117,7 @@ Note: Keep all files in the same folder."""
     print(f"\nDistribution package created in: {dist_folder}")
     
     # Create release package
-    release_version = "1.0.0"  # Update this for new releases
+    release_version = "1.1.0"  # Update this for new releases
     release_folder = "release"
     if os.path.exists(release_folder):
         shutil.rmtree(release_folder)
@@ -132,7 +135,7 @@ A desktop application to track job applications, especially useful for LinkedIn 
 ## Features
 - Track job applications with company name and job link
 - Search through previous applications
-- Statistics and analytics
+- Basic statistics
 - Modern user interface
 - No installation needed - just unzip and run
 
@@ -145,11 +148,17 @@ A desktop application to track job applications, especially useful for LinkedIn 
 - Windows 7 or later
 - No additional software needed
 
+## Important: Local data storage
+
+- Your data is stored only on your computer; nothing is uploaded to any cloud service.
+- Default location: the same folder as `JobTracker.exe`.
+- To change the storage folder, open the app and go to: Settings → Storage Location → Change Folder.
+- If you plan to keep the exe on your Desktop, create a personal subfolder (e.g., `Desktop\\MyJobTracker`) and select it to avoid files being created directly on the Desktop.
+
 ## What's New in v{release_version}
-- Initial release
-- Job application tracking
-- Search functionality
-- Statistics dashboard
+- Added option to choose a custom storage folder for `settings.json` and `job_data.json`.
+- Removed heavy plotting dependencies and graphs; kept lightweight basic stats.
+- Significantly reduced executable size for faster downloads and updates.
 """
     
     with open(os.path.join(release_folder, "RELEASE_NOTES.md"), 'w') as f:

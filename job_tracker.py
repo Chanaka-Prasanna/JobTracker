@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
+from tkinter import filedialog
 import ttkbootstrap as ttk
 from ttkbootstrap.scrolled import ScrolledFrame
 import json
@@ -7,7 +8,6 @@ import os
 import sys
 from datetime import datetime
 import pyperclip  # For copying to clipboard
-from PIL import Image, ImageTk
 from stats_manager import StatsManager
 from settings_manager import SettingsManager
 
@@ -22,9 +22,10 @@ class JobTracker:
             self.app_dir = os.path.dirname(sys.executable)
         else:
             self.app_dir = os.path.dirname(os.path.abspath(__file__))
-            
-        self.data_file = os.path.join(self.app_dir, 'job_data.json')
-        self.settings_manager = SettingsManager()
+
+        # SettingsManager now manages storage paths and a pointer file
+        self.settings_manager = SettingsManager(self.app_dir)
+        self.data_file = self.settings_manager.get_data_file_path()
         self.load_data()
         
         # Initialize stats manager
@@ -85,7 +86,7 @@ class JobTracker:
         self.create_settings_tab()
         
     def create_stats_tab(self):
-        """Create the statistics tab with graphs and analytics"""
+        """Create the statistics tab with basic analytics only"""
         # Create main container
         stats_container = ScrolledFrame(self.stats_tab, autohide=True)
         stats_container.pack(fill="both", expand=True, padx=10, pady=5)
@@ -101,7 +102,7 @@ class JobTracker:
         self.unique_companies_label = ttk.Label(basic_stats_frame, text="Unique Companies: 0")
         self.unique_companies_label.pack(anchor="w", pady=2)
         
-        self.daily_rate_label = ttk.Label(basic_stats_frame, text="Daily Application Rate: 0")
+        self.daily_rate_label = ttk.Label(basic_stats_frame, text="Daily Application Rate: 0.0")
         self.daily_rate_label.pack(anchor="w", pady=2)
         
         # Applications by Role Section
@@ -112,24 +113,6 @@ class JobTracker:
         self.roles_tree.heading("role", text="Role")
         self.roles_tree.heading("count", text="Applications")
         self.roles_tree.pack(fill="x", pady=5)
-        
-        # Graphs Section
-        graphs_frame = ttk.LabelFrame(stats_container, text="Application Trends", padding=10)
-        graphs_frame.pack(fill="both", expand=True, padx=5, pady=5)
-        
-        # Daily Applications Graph
-        self.daily_graph_label = ttk.Label(graphs_frame, text="Daily Applications")
-        self.daily_graph_label.pack(pady=5)
-        
-        self.daily_graph = ttk.Label(graphs_frame)
-        self.daily_graph.pack(pady=5)
-        
-        # Role Distribution Graph
-        self.role_graph_label = ttk.Label(graphs_frame, text="Role Distribution")
-        self.role_graph_label.pack(pady=5)
-        
-        self.role_graph = ttk.Label(graphs_frame)
-        self.role_graph.pack(pady=5)
         
         # Refresh button
         ttk.Button(stats_container, text="Refresh Statistics", 
@@ -154,6 +137,28 @@ class JobTracker:
         self.settings_name_var = tk.StringVar(value=self.settings_manager.get_user_name())
         name_entry = ttk.Entry(user_frame, textvariable=self.settings_name_var, width=40)
         name_entry.grid(row=0, column=1, columnspan=2, padx=5, pady=5)
+
+        # Storage Directory Picker
+        storage_frame = ttk.LabelFrame(settings_container, text="Storage Location", padding=10)
+        storage_frame.pack(fill="x", padx=5, pady=5)
+
+        ttk.Label(storage_frame, text="Current Folder:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.storage_dir_var = tk.StringVar(value=self.settings_manager.get_storage_directory())
+        storage_entry = ttk.Entry(storage_frame, textvariable=self.storage_dir_var, width=50, state="readonly")
+        storage_entry.grid(row=0, column=1, padx=5, pady=5, sticky="we")
+
+        def choose_folder():
+            folder = filedialog.askdirectory(title="Choose storage folder")
+            if folder:
+                # Apply new storage directory
+                self.settings_manager.set_storage_directory(folder)
+                # Update internal data path and reload data
+                self.data_file = self.settings_manager.get_data_file_path()
+                self.storage_dir_var.set(self.settings_manager.get_storage_directory())
+                self.load_data()
+                self.refresh_statistics()
+
+        ttk.Button(storage_frame, text="Change Folder", command=choose_folder, style="secondary.TButton").grid(row=0, column=2, padx=5, pady=5)
         
         # Job Roles Section
         roles_frame = ttk.LabelFrame(settings_container, text="Job Roles", padding=10)
@@ -243,7 +248,7 @@ class JobTracker:
         messagebox.showinfo("Success", "Settings saved successfully!")
     
     def refresh_statistics(self):
-        """Update all statistics and graphs"""
+        """Update all basic statistics"""
         # Update stats manager with current data
         self.stats_manager = StatsManager(self.jobs, self.settings_manager)
         
@@ -259,19 +264,6 @@ class JobTracker:
         self.roles_tree.delete(*self.roles_tree.get_children())
         for role, count in stats['applications_by_role'].items():
             self.roles_tree.insert("", "end", values=(role, count))
-        
-        # Update graphs
-        daily_plot = self.stats_manager.generate_daily_applications_plot()
-        if daily_plot:
-            daily_img = ImageTk.PhotoImage(Image.open(daily_plot))
-            self.daily_graph.configure(image=daily_img)
-            self.daily_graph.image = daily_img
-        
-        roles_plot = self.stats_manager.generate_roles_pie_chart()
-        if roles_plot:
-            roles_img = ImageTk.PhotoImage(Image.open(roles_plot))
-            self.role_graph.configure(image=roles_img)
-            self.role_graph.image = roles_img
     
     def create_main_tab(self):
         # Search Frame

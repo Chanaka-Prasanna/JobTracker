@@ -31,7 +31,7 @@ release/
 
 # Application data
 job_data.json
-settings.json
+# Don't ignore settings.json as it contains default roles for new installations
 
 # IDE
 .idea/
