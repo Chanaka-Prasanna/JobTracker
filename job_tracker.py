@@ -23,9 +23,12 @@ class JobTracker:
         else:
             self.app_dir = os.path.dirname(os.path.abspath(__file__))
 
-        # SettingsManager now manages storage paths and a pointer file
+        # SettingsManager manages storage paths
         self.settings_manager = SettingsManager(self.app_dir)
         self.data_file = self.settings_manager.get_data_file_path()
+
+        # Before loading the app UI, ensure storage location and user name are set
+        self._ensure_initial_setup()
         self.load_data()
         
         # Initialize stats manager
@@ -52,6 +55,98 @@ class JobTracker:
                 json.dump(self.jobs, f, indent=4)
         except Exception as e:
             messagebox.showerror("Error", f"Error saving data: {str(e)}")
+
+    def _ensure_initial_setup(self):
+        """Prompt for storage folder and user name only on true first run.
+        If either settings.json or job_data.json exists in the chosen folder, do not prompt for path.
+        """
+        settings_path = self.settings_manager.get_settings_file_path()
+        has_settings = os.path.exists(settings_path)
+        has_data = os.path.exists(self.data_file)
+        has_user = bool(self.settings_manager.get_user_name().strip())
+
+        # If any chosen settings or data file is present, don't ask for path again
+        if has_settings or has_data:
+            return
+
+        # If nothing exists yet (true first run), show setup dialog
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Initial Setup")
+        dialog.geometry("600x260")
+        dialog.minsize(600, 260)
+        dialog.transient(self.root)
+        dialog.grab_set()
+        try:
+            dialog.attributes('-topmost', True)
+        except Exception:
+            pass
+
+        frame = ttk.Frame(dialog, padding=20)
+        frame.pack(fill="both", expand=True)
+        # Allow inputs to stretch
+        try:
+            frame.grid_columnconfigure(1, weight=1)
+        except Exception:
+            pass
+
+        # User Name
+        ttk.Label(frame, text="Your Name:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        name_var = tk.StringVar(value=self.settings_manager.get_user_name())
+        ttk.Entry(frame, textvariable=name_var, width=40).grid(row=0, column=1, columnspan=2, padx=5, pady=5, sticky="we")
+
+        # Storage Folder
+        ttk.Label(frame, text="Storage Folder:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        folder_var = tk.StringVar(value=self.settings_manager.get_storage_directory())
+        folder_entry = ttk.Entry(frame, textvariable=folder_var, width=48)
+        folder_entry.grid(row=1, column=1, padx=5, pady=5, sticky="we")
+
+        def browse_folder():
+            folder = filedialog.askdirectory(title="Choose storage folder")
+            if folder:
+                folder_var.set(folder)
+
+        ttk.Button(frame, text="Browse", command=browse_folder).grid(row=1, column=2, padx=5, pady=5)
+
+        # Buttons
+        buttons = ttk.Frame(frame)
+        buttons.grid(row=3, column=0, columnspan=3, pady=(20, 0), sticky="e")
+
+        def on_cancel():
+            dialog.destroy()
+            self.root.destroy()
+
+        def on_continue():
+            chosen_name = name_var.get().strip()
+            chosen_folder = folder_var.get().strip() or self.app_dir
+            # Persist storage first; this also ensures files/dirs
+            self.settings_manager.set_storage_directory(chosen_folder)
+            # Apply paths
+            self.data_file = self.settings_manager.get_data_file_path()
+            # Ensure data file exists
+            if not os.path.exists(self.data_file):
+                try:
+                    with open(self.data_file, 'w') as f:
+                        json.dump([], f)
+                except Exception as e:
+                    messagebox.showerror("Error", f"Unable to create data file: {str(e)}")
+                    return
+            # Persist user name
+            if chosen_name:
+                self.settings_manager.update_user_name(chosen_name)
+            dialog.destroy()
+
+        ttk.Button(buttons, text="Cancel", command=on_cancel).pack(side="right", padx=5)
+        ttk.Button(buttons, text="Continue", style="success.TButton", command=on_continue).pack(side="right", padx=5)
+
+        # Center dialog
+        dialog.update_idletasks()
+        target_w, target_h = 600, 260
+        x = (dialog.winfo_screenwidth() // 2) - (target_w // 2)
+        y = (dialog.winfo_screenheight() // 2) - (target_h // 2)
+        dialog.geometry(f"{target_w}x{target_h}+{x}+{y}")
+        dialog.lift()
+        dialog.focus_force()
+        dialog.wait_window()
             
     def create_widgets(self):
         # Create greeting frame

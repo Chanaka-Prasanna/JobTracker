@@ -19,25 +19,15 @@ def clean_build():
             file.unlink()
 
 def ensure_data_files():
-    """Ensure necessary data files exist with default content"""
-    # For settings.json, we want to preserve existing file if it exists
-    if not os.path.exists('settings.json'):
-        # Only create if it doesn't exist
-        from settings_manager import SettingsManager
-        settings_manager = SettingsManager(os.getcwd())
-        settings_manager.load_settings()
-    
-    # Ensure job_data.json exists
-    if not os.path.exists('job_data.json'):
-        with open('job_data.json', 'w') as f:
-            json.dump([], f)
+    """No-op: data files are created in the chosen storage directory by the app."""
+    return
 
 def build_app():
     """Build the application"""
     # Clean previous builds
     clean_build()
     
-    # Ensure data files exist
+    # No pre-creation of data files in project root
     ensure_data_files()
     
     # PyInstaller arguments
@@ -50,14 +40,12 @@ def build_app():
         '--clean',  # Clean PyInstaller cache
     ]
     
-    # Add all necessary files
-    required_files = [
-        'settings.json',  # Settings and job roles
-        'job_data.json',  # Job applications data
-        'app.ico'  # Application icon
+    # Add only static resources if any (e.g., icon)
+    static_files = [
+        'app.ico'
     ]
     
-    for file in required_files:
+    for file in static_files:
         if os.path.exists(file):
             args.append(f'--add-data={file};.')
     
@@ -70,30 +58,10 @@ def build_app():
         shutil.rmtree(dist_folder)
     os.makedirs(dist_folder)
     
-    # Copy executable and create empty data files
+    # Copy executable
     shutil.copy2(os.path.join("dist", "JobTracker.exe"), dist_folder)
-    with open(os.path.join(dist_folder, "job_data.json"), 'w') as f:
-        json.dump([], f)
     
-    # Copy settings with default values
-    default_settings = {
-        "user_name": "",
-        "job_roles": [
-            "Software Engineer",
-            "Associate Software Engineer",
-            "Software Engineer Intern",
-            "ML Engineer",
-            "AI Engineer",
-            "Associate ML Engineer",
-            "Associate AI Engineer",
-            "Data Scientist",
-            "ML Intern",
-            "AI Intern",
-            "Data Science Intern"
-        ]
-    }
-    with open(os.path.join(dist_folder, "settings.json"), 'w') as f:
-        json.dump(default_settings, f, indent=2)
+    # Do not include default data files in distribution; app will create them in chosen folder
     
     # Create README
     readme_content = """Job Application Tracker
@@ -103,14 +71,15 @@ This is a standalone application for tracking job applications.
 To use:
 1. Double-click JobTracker.exe to start
 2. No installation needed
-3. Data is stored locally by default next to the executable
+3. Data is stored locally in your chosen folder (Settings → Storage Location)
 
 Important:
 - Your data is stored only on your computer; nothing is uploaded to any cloud.
 - You can change where data is stored from within the app: Settings → Storage Location → Change Folder.
-- If you keep the exe on your Desktop, consider creating a personal subfolder (e.g., Desktop\\MyJobTracker) and choose it to avoid files being created directly on the Desktop."""
+- If you keep the exe on your Desktop, consider creating a personal subfolder (e.g., Desktop\\MyJobTracker) and choose it to avoid files being created directly on the Desktop.
+"""
     
-    with open(os.path.join(dist_folder, "README.txt"), 'w') as f:
+    with open(os.path.join(dist_folder, "README.txt"), 'w', encoding='utf-8') as f:
         f.write(readme_content)
     
     print("\nBuild completed!")
@@ -122,10 +91,6 @@ Important:
     if os.path.exists(release_folder):
         shutil.rmtree(release_folder)
     os.makedirs(release_folder)
-    
-    # Create zip file
-    zip_name = f"JobTracker-v{release_version}-windows.zip"
-    zip_path = os.path.join(release_folder, zip_name)
     
     # Create release notes
     release_notes = f"""# Job Application Tracker v{release_version}
@@ -151,17 +116,17 @@ A desktop application to track job applications, especially useful for LinkedIn 
 ## Important: Local data storage
 
 - Your data is stored only on your computer; nothing is uploaded to any cloud service.
-- Default location: the same folder as `JobTracker.exe`.
-- To change the storage folder, open the app and go to: Settings → Storage Location → Change Folder.
+- When first run, choose where to store your data.
+- To change the storage folder later, open the app and go to: Settings → Storage Location → Change Folder.
 - If you plan to keep the exe on your Desktop, create a personal subfolder (e.g., `Desktop\\MyJobTracker`) and select it to avoid files being created directly on the Desktop.
 
 ## What's New in v{release_version}
-- Added option to choose a custom storage folder for `settings.json` and `job_data.json`.
+- Storage location now fully respects your chosen folder; no files are created in the app root.
 - Removed heavy plotting dependencies and graphs; kept lightweight basic stats.
 - Significantly reduced executable size for faster downloads and updates.
 """
     
-    with open(os.path.join(release_folder, "RELEASE_NOTES.md"), 'w') as f:
+    with open(os.path.join(release_folder, "RELEASE_NOTES.md"), 'w', encoding='utf-8') as f:
         f.write(release_notes)
     
     # Create zip file
